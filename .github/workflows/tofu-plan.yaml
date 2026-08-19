@@ -8,7 +8,7 @@ permissions:
   contents: read
   id-token: write
 
-concurrency
+concurrency:
   group: tofu-plan-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
