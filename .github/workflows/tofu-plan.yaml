@@ -8,7 +8,7 @@ permissions:
   contents: read
   id-token: write
 
-concurrency:
+concurrency
   group: tofu-plan-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
@@ -17,7 +17,7 @@ jobs:
     runs-on: homelab-runners
     
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.TF_VAR_CLOUDFLARE_API_TOKEN }}
   
     steps:
       - name: checkout
