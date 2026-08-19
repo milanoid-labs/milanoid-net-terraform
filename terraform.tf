@@ -19,7 +19,23 @@ terraform {
   }
 }
 
+variable "cloudflare_api_token" {
+
+}
+
+
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
+
+
+
+data "cloudflare_account_dns_settings" "example_account_dns_settings" {
+  account_id = "291411295d77f61bd1a1b00993b3a9b8" # not sensitive, same as username
+}
+
+output "test" {
+  value = data.cloudflare_account_dns_settings.example_account_dns_settings
+}
+
 
