@@ -37,6 +37,13 @@ locals {
   aws_region  = "eu-central-1"
   repository  = "milanoid-net-terraform"
   bucket_name = "milanoid-labs-terraform-tofu-state"
+
+  # This repo was created after GitHub's rollout of org/repo-ID-embedded `sub`
+  # claims (protects against subject reuse if a repo is later renamed/deleted
+  # and the name recycled), so its claim format differs from older repos like
+  # milanoid-labs-terraform, which still use the plain "OWNER/REPO" form.
+  # Verified via: gh api repos/milanoid-labs/milanoid-net-terraform/actions/oidc/customization/sub
+  oidc_sub_prefix = "repo:milanoid-labs@272012797/milanoid-net-terraform@1339259283"
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -60,7 +67,7 @@ resource "aws_iam_role" "github_actions_plan" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:milanoid-labs/milanoid-net-terraform:pull_request"
+            "token.actions.githubusercontent.com:sub" = "${local.oidc_sub_prefix}:pull_request"
           }
         }
       },
@@ -123,7 +130,7 @@ resource "aws_iam_role" "github_actions_apply" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:milanoid-labs/milanoid-net-terraform:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "${local.oidc_sub_prefix}:ref:refs/heads/main"
           }
         }
       },
