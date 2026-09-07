@@ -128,11 +128,6 @@ import {
 }
 
 import {
-  to = cloudflare_dns_record.vpn_a
-  id = "24c6e9ce34c46bf8ce6a18d06667afe1/7290fa4e82fa30b26731b3d46c4babb8" # vpn.milanoid.net (A)
-}
-
-import {
   to = cloudflare_dns_record.vpn_aaaa
   id = "24c6e9ce34c46bf8ce6a18d06667afe1/5f259eed154a43bcb63123b7dad55488" # vpn.milanoid.net (AAAA)
 }

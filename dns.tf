@@ -113,27 +113,20 @@ resource "cloudflare_dns_record" "host" {
 }
 
 # ---------------------------------------------------------------------------
-# vpn: the home WAN address, kept current by ddclient on hpmini01.
+# vpn: the WireGuard endpoint on the ASUS router, kept current by ddclient on
+# hpmini01 (which reads the router's own address via `ssh asus curl ipify`).
 #
-# ddclient rewrites `content` whenever the ISP hands out a new address, so these
-# two are deliberately excluded from drift management — OpenTofu owns the TTL,
-# proxy setting and comment, but never the address itself. The values committed
-# here are only what was current at import time and will go stale; that is fine.
+# AAAA only, deliberately. The home sits behind O2 CGNAT — the router's WAN is
+# 10.226.132.146 and 109.81.174.65 is a shared carrier address — so inbound IPv4
+# cannot be made to work by any port forward. An A record here is worse than
+# useless: clients resolve it in preference to the AAAA and then black-hole,
+# which is exactly how this broke. IPv6 reaches the router directly.
+#
+# ddclient rewrites `content` whenever the ISP hands out a new prefix, so it is
+# deliberately excluded from drift management — OpenTofu owns the TTL, proxy
+# setting and comment, but never the address itself. The value committed here is
+# only what was current at import time and will go stale; that is fine.
 # ---------------------------------------------------------------------------
-
-resource "cloudflare_dns_record" "vpn_a" {
-  zone_id = data.cloudflare_zone.milanoid_net.zone_id
-  name    = "vpn.${local.zone_name}"
-  type    = "A"
-  content = "109.81.174.65"
-  ttl     = 1 # automatic
-  proxied = false
-  comment = null
-
-  lifecycle {
-    ignore_changes = [content]
-  }
-}
 
 resource "cloudflare_dns_record" "vpn_aaaa" {
   zone_id = data.cloudflare_zone.milanoid_net.zone_id
