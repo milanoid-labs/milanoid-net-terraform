@@ -1,0 +1,97 @@
+name: Tofu Plan
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+  # Needed to post the plan as a PR comment, so DNS changes are reviewable
+  # before merge rather than only in the job log.
+  pull-requests: write
+
+concurrency:
+  group: tofu-plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: homelab-runners
+    
+    env:
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_CLOUDFLARE_API_TOKEN }}
+  
+    steps:
+      - name: checkout
+        id: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: setup opentufu
+        id: setup-opentofu
+        uses: opentofu/setup-opentofu@847eaa4afeb791b06daa46e8eafa8b1b68d7cfb4 # v2.0.1
+        with:
+          tofu_version: "1.12.2"
+          # The wrapper shells out via `env node`, but our self-hosted runner
+          # has no system Node on PATH. We don't read step outputs, so disable it.
+          tofu_wrapper: false
+    
+      - name: configure aws credentials
+        id: configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+
+      - name: tofu init
+        id: tofu-init
+        run: tofu init -input=false
+
+      - name: tofu plan
+        id: tofu-plan
+        run: |
+          set -o pipefail
+          tofu plan -input=false -no-color -out tfplan | tee plan.txt
+
+      - name: comment plan on pr
+        id: comment-plan
+        if: always() && steps.tofu-plan.outcome != 'skipped'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- tofu-plan -->';
+            const max = 60000;  // GitHub caps a comment at 65536 chars
+
+            let plan = '';
+            try {
+              plan = fs.readFileSync('plan.txt', 'utf8');
+            } catch {
+              plan = 'No plan output — the plan step failed before producing any. See the job log.';
+            }
+            const truncated = plan.length > max;
+            if (truncated) plan = plan.slice(-max);
+
+            const body = [
+              marker,
+              `### Tofu plan \`${{ steps.tofu-plan.outcome }}\``,
+              truncated ? '_Output truncated to the last 60k characters._' : '',
+              '```terraform',
+              plan,
+              '```',
+            ].filter(Boolean).join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            // Update our own previous comment instead of adding one per push.
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number,
+            });
+            const existing = comments.find(c => c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
