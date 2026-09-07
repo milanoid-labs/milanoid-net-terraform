@@ -30,7 +30,7 @@ jobs:
 
       - name: tofu init
         id: tofu-init
-        run: tofu init -backend=false
+        run: tofu init -backend=false -input=false
 
       - name: tofu validate
         id: tofu-val

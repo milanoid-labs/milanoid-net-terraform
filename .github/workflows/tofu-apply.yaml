@@ -17,7 +17,7 @@ jobs:
     runs-on: homelab-runners
     
     env:
-      # todo - cloudflare token GITHUB_TOKEN: ${{ secrets.TF_ADMIN_GITHUB_TOKEN }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_CLOUDFLARE_API_TOKEN }}
   
     steps:
       - name: checkout
@@ -42,12 +42,12 @@ jobs:
 
       - name: tofu init
         id: tofu-init
-        run: tofu init
+        run: tofu init -input=false
 
       - name: tofu plan
         id: tofu-plan
-        run: tofu plan -out tfplan
+        run: tofu plan -input=false -out tfplan
 
       - name: tofu apply
         id: tofu-apply
-        run: tofu apply -auto-approve tfplan
+        run: tofu apply -input=false -auto-approve tfplan

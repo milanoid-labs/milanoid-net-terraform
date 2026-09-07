@@ -1,6 +1,6 @@
 terraform {
 
-  required_version = "1.12.2"
+  required_version = "~> 1.12"
 
   backend "s3" {
     bucket       = "milanoid-labs-terraform-tofu-state"
