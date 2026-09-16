@@ -31,6 +31,7 @@ locals {
     "home-dashboard" = { ip = local.traefik_ip_hpmini01, comment = "k3s Traefik ingress (homelab-cluster: apps/argocd/home-dashboard)" }
     "linkding"       = { ip = local.traefik_ip_hpmini01, comment = "Internal IP of the Ingress service (Traefik)." }
     "pihole"         = { ip = local.traefik_ip_hpmini02, comment = null }
+    "prometheus"     = { ip = local.traefik_ip_hpmini01, comment = "Prometheus via Traefik ingress" }
     "prowlarr"       = { ip = local.traefik_ip_hpmini01, comment = null }
     "radarr"         = { ip = local.traefik_ip_hpmini01, comment = "radarr via traefik ingress" }
     "rollouts"       = { ip = local.traefik_ip_hpmini01, comment = "Argo Rollouts dashboard via Traefik ingress" }
